@@ -1,0 +1,37 @@
+[
+  {
+    "input": "What time is it right now in London?",
+    "expected_output": "The current local time in London with timezone and UTC offset.",
+    "expected_tools": ["get_current_time"],
+    "category": "timezone",
+    "difficulty": "easy"
+  },
+  {
+    "input": "I have 500 Euros, how many Japanese Yen is that worth?",
+    "expected_output": "The conversion of 500 EUR to JPY with the current rate.",
+    "expected_tools": ["get_exchange_rate"],
+    "category": "currency",
+    "difficulty": "easy"
+  },
+  {
+    "input": "Check the current time in Tokyo and tell me if it's currently raining there.",
+    "expected_output": "The current local time in Tokyo and the current weather report.",
+    "expected_tools": ["get_current_time", "get_weather"],
+    "category": "multi_tool",
+    "difficulty": "medium"
+  },
+  {
+    "input": "What is the exchange rate from GBP to USD, and what's the weather like in New York?",
+    "expected_output": "The GBP to USD exchange rate and the current weather in New York City.",
+    "expected_tools": ["get_exchange_rate", "get_weather"],
+    "category": "multi_tool",
+    "difficulty": "medium"
+  },
+  {
+    "input": "I am planning a business trip from New York to Tokyo. How long is the flight route by driving to JFK first, what is the current time in Tokyo, what is the weather there, what is the USD to JPY exchange rate, and what are the top business hotels in Shinjuku?",
+    "expected_output": "Driving directions from Manhattan to JFK Airport with distance and time, the current local time in Tokyo with timezone info, current Tokyo weather with temperature, the USD to JPY exchange rate, and a list of recommended business hotels in the Shinjuku area of Tokyo.",
+    "expected_tools": ["get_directions", "get_current_time", "get_weather", "get_exchange_rate", "duckduckgo_search"],
+    "category": "multi_tool",
+    "difficulty": "hard"
+  }
+]

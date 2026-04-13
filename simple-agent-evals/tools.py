@@ -18,7 +18,8 @@ import time
 import requests
 from ddgs import DDGS
 from strands.tools.decorator import tool
-
+from zoneinfo import ZoneInfo
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(
@@ -34,6 +35,20 @@ OSRM_BASE_URL = "https://router.project-osrm.org/route/v1/driving"
 OPEN_METEO_BASE_URL = "https://api.open-meteo.com/v1/forecast"
 NOMINATIM_USER_AGENT = "simple-agent-evals/1.0"
 HTTP_TIMEOUT_SECONDS = 10
+
+CITY_TIMEZONE_MAP = {
+    "tokyo": "Asia/Tokyo",
+    "london": "Europe/London",
+    "new york": "America/New_York",
+    "nyc": "America/New_York",
+    "paris": "Europe/Paris",
+    "berlin": "Europe/Berlin",
+    "shanghai": "Asia/Shanghai",
+    "dubai": "Asia/Dubai",
+    "sydney": "Australia/Sydney",
+    "arlington": "America/New_York", 
+    "washington dc": "America/New_York",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -281,4 +296,88 @@ def get_directions(
 
     except Exception as e:
         logger.error(f"[Tool] get_directions failed: {e}")
+        return json.dumps({"error": str(e)})
+
+@tool
+def get_current_time(city: str) -> str:
+    """
+    Get the current local time for a specific city. 
+    Supported cities include Tokyo, London, New York, Paris, etc.
+
+    Args:
+        city: The name of the city (e.g., 'Tokyo')
+
+    Returns:
+        JSON string with current local time, timezone name, and UTC offset.
+    """
+    try:
+        city_key = city.lower().strip()
+        logger.info(f"[Tool] get_current_time: city='{city}'")
+        
+        if city_key not in CITY_TIMEZONE_MAP:
+            return json.dumps({"error": f"City '{city}' not found in database."})
+            
+        tz_name = CITY_TIMEZONE_MAP[city_key]
+        now = datetime.now(ZoneInfo(tz_name))
+        
+        # Format UTC offset as +HH:MM
+        offset = now.strftime("%z")
+        formatted_offset = f"{offset[:3]}:{offset[3:]}"
+        
+        result = {
+            "city": city.title(),
+            "local_time": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "timezone": tz_name,
+            "abbreviation": now.strftime("%Z"),
+            "utc_offset": formatted_offset
+        }
+        
+        logger.info(f"[Tool] get_current_time success for {city}")
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        logger.error(f"[Tool] get_current_time failed: {e}")
+        return json.dumps({"error": str(e)})
+
+@tool
+def get_exchange_rate(base_currency: str, target_currency: str, amount: float = 1.0) -> str:
+    """
+    Get the current exchange rate and converted amount between two currencies using Frankfurter API.
+
+    Args:
+        base_currency: The ISO 4217 code for the source currency (e.g., 'USD')
+        target_currency: The ISO 4217 code for the target currency (e.g., 'EUR')
+        amount: The amount to convert (default is 1.0)
+
+    Returns:
+        JSON string with the exchange rate and converted total.
+    """
+    try:
+        logger.info(f"[Tool] get_exchange_rate: {amount} {base_currency} to {target_currency}")
+        
+        url = f"https://api.frankfurter.app/latest"
+        params = {
+            "from": base_currency.upper(),
+            "to": target_currency.upper(),
+            "amount": amount
+        }
+        
+        response = requests.get(url, params=params, timeout=HTTP_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        data = response.json()
+        
+        rate = data["rates"][target_currency.upper()]
+        
+        result = {
+            "base": base_currency.upper(),
+            "target": target_currency.upper(),
+            "amount": amount,
+            "rate": rate,
+            "converted_amount": data["rates"][target_currency.upper()],
+            "date": data["date"]
+        }
+        
+        logger.info(f"[Tool] get_exchange_rate success: 1 {base_currency} = {rate} {target_currency}")
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        logger.error(f"[Tool] get_exchange_rate failed: {e}")
         return json.dumps({"error": str(e)})
